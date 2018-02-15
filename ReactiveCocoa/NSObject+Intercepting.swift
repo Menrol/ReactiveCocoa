@@ -155,8 +155,9 @@ private func enableMessageForwarding(_ realClass: AnyClass, _ selectorCache: Sel
 			}
 		}
 
-		let method = class_getInstanceMethod(perceivedClass, selector)!
-		let typeEncoding = method_getTypeEncoding(method)
+		let method = class_getInstanceMethod(perceivedClass, selector)
+		let typeEncoding = method.map(method_getTypeEncoding)
+			?? objectRef.takeUnretainedValue().methodSignature(for: selector)
 
 		if class_respondsToSelector(realClass, interopAlias) {
 			// RAC has preserved an immediate implementation found in the runtime
@@ -205,7 +206,7 @@ private func enableMessageForwarding(_ realClass: AnyClass, _ selectorCache: Sel
 			return
 		}
 
-		let impl = method_getImplementation(method)
+		let impl = method.map(method_getImplementation) ?? _rac_objc_msgForward
 		if impl != _rac_objc_msgForward {
 			// The perceived class, or its ancestors, responds to the selector.
 			//
